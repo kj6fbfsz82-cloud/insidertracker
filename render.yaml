@@ -2,7 +2,7 @@ services:
   # Backend API
   - type: web
     name: insidertracker-api
-    env: python
+    runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
     envVars:
@@ -17,19 +17,11 @@ services:
       - key: ALPACA_BASE_URL
         value: https://paper-api.alpaca.markets
     rootDir: backend
-    plan: free
 
   # Frontend (Static Site)
   - type: web
     name: insidertracker-frontend
-    env: static
+    runtime: static
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     rootDir: frontend
-    plan: free
-    envVars:
-      - key: VITE_API_URL
-        fromService:
-          name: insidertracker-api
-          type: web
-          property: host
