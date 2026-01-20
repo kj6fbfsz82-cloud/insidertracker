@@ -408,8 +408,8 @@ const TradingView = () => {
             onClick={executeTrade}
             disabled={executing || !tradeSymbol || !tradeQty}
             className={`px-6 py-2 rounded-lg font-medium transition-colors ${tradeSide === "buy"
-                ? "bg-emerald-500 text-black hover:bg-emerald-400"
-                : "bg-red-500 text-white hover:bg-red-400"
+              ? "bg-emerald-500 text-black hover:bg-emerald-400"
+              : "bg-red-500 text-white hover:bg-red-400"
               } disabled:opacity-50`}
           >
             {executing ? "Executing..." : `${tradeSide.toUpperCase()} ${tradeSymbol.toUpperCase() || "..."}`}
@@ -579,6 +579,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState("dashboard");
   const [selectedTrade, setSelectedTrade] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:8000/api/insider-trades")
@@ -606,6 +607,11 @@ function App() {
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
+  const handleNavClick = (id) => {
+    setActiveView(id);
+    setMobileMenuOpen(false);
+  };
+
   const renderView = () => {
     switch (activeView) {
       case "trading": return <TradingView />;
@@ -618,13 +624,24 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-border bg-background hidden md:flex flex-col">
-        <div className="p-6 border-b border-border">
-          <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-            <TrendingUp className="h-6 w-6 text-emerald-500" />
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
+      {/* Sidebar - Desktop always visible, Mobile slide-in */}
+      <aside className={cn(
+        "fixed md:static inset-y-0 left-0 z-50 w-64 border-r border-border bg-background flex flex-col transition-transform md:translate-x-0",
+        mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="p-4 md:p-6 border-b border-border flex items-center justify-between">
+          <h1 className="text-lg md:text-xl font-bold tracking-tight flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-emerald-500" />
             InsiderTracker
           </h1>
+          <button className="md:hidden p-2" onClick={() => setMobileMenuOpen(false)}>
+            <X className="h-5 w-5" />
+          </button>
         </div>
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map((item) => (
@@ -633,20 +650,31 @@ function App() {
               icon={item.icon}
               label={item.label}
               active={activeView === item.id}
-              onClick={() => setActiveView(item.id)}
+              onClick={() => handleNavClick(item.id)}
             />
           ))}
         </nav>
       </aside>
 
-      {/* Main */}
-      <div className="flex-1 flex flex-col">
-        <header className="h-16 border-b border-border bg-background px-6 flex items-center justify-between">
-          <div className="flex items-center gap-4 text-muted-foreground bg-secondary/50 px-4 py-2 rounded-md w-96">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="h-14 md:h-16 border-b border-border bg-background px-4 md:px-6 flex items-center justify-between">
+          {/* Mobile menu button */}
+          <button className="md:hidden p-2 -ml-2" onClick={() => setMobileMenuOpen(true)}>
+            <Menu className="h-5 w-5" />
+          </button>
+
+          {/* Search - hidden on mobile */}
+          <div className="hidden md:flex items-center gap-4 text-muted-foreground bg-secondary/50 px-4 py-2 rounded-md w-96">
             <Search className="h-4 w-4" />
             <span className="text-sm">Search detailed ticker report...</span>
           </div>
-          <div className="flex items-center gap-4">
+
+          {/* Mobile title */}
+          <span className="md:hidden font-semibold text-sm">{navItems.find(n => n.id === activeView)?.label || "Dashboard"}</span>
+
+          <div className="flex items-center gap-2 md:gap-4">
             <button className="relative p-2 text-muted-foreground hover:text-primary transition-colors">
               <Bell className="h-5 w-5" />
               <span className="absolute top-2 right-2 h-2 w-2 bg-emerald-500 rounded-full" />
@@ -657,7 +685,8 @@ function App() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-8 space-y-8">
+        {/* Main content with responsive padding */}
+        <main className="flex-1 overflow-auto p-4 md:p-8 space-y-4 md:space-y-8">
           {renderView()}
         </main>
       </div>
@@ -669,3 +698,4 @@ function App() {
 }
 
 export default App;
+
